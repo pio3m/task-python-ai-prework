@@ -5,9 +5,9 @@
 &nbsp;
 
 
-# Stwórz Document Intake CLI: narzędzie do wczytywania i weryfikacji dokumentów firmy
+# Stwórz program do przyjmowania dokumentów firmy: wczytywanie, weryfikacja i raport
 
-Zbudujesz małe narzędzie wiersza poleceń, które wczytuje dokumenty firmy (faktury i umowy) z plików, sprawdza ich poprawność, „przetwarza” je przez symulowane zewnętrzne API i zapisuje raport. To fundament, na którym od Modułu 1 będziesz budować backend Enterprise Document Assistant.
+Zbudujesz mały program uruchamiany z terminala, który wczytuje dokumenty firmy (faktury i umowy) z plików, sprawdza ich poprawność, „przetwarza” je przez symulowane zewnętrzne API i zapisuje raport. To fundament, na którym od Modułu 1 będziesz budować backend Enterprise Document Assistant.
 
 **Zakres projektu:**
 
@@ -21,7 +21,7 @@ Zbudujesz małe narzędzie wiersza poleceń, które wczytuje dokumenty firmy (fa
 **Co powinno znaleźć się w Twoim projekcie?**
 
 1. Konfiguracja wczytywana z pliku `.env` (przez `python-dotenv`):
-   - `INPUT_DIR` – katalog z dokumentami do wczytania (`str`),
+   - `DOCS_DIR` – katalog z dokumentami do wczytania (`str`),
    - `OUTPUT_FILE` – ścieżka pliku z raportem (`str`),
    - `AMOUNT_THRESHOLD` – kwota, powyżej której faktura wymaga akceptacji (`float`),
    - `MAX_RETRIES` – liczba prób wywołania API (`int`).
@@ -36,7 +36,7 @@ Zbudujesz małe narzędzie wiersza poleceń, które wczytuje dokumenty firmy (fa
    - co najmniej dwa wyjątki szczegółowe, np. `EmptyContentError` i `InvalidAmountError`.
 
 4. Moduł wczytujący dane:
-   - funkcja wczytująca wszystkie pliki `*.json` i `*.csv` z `INPUT_DIR`,
+   - funkcja wczytująca wszystkie pliki `*.json` i `*.csv` z `DOCS_DIR`,
    - błędny plik lub rekord nie przerywa działania, tylko trafia do listy błędów z nazwą pliku i powodem.
 
 5. Moduł przetwarzający:
@@ -49,10 +49,10 @@ Zbudujesz małe narzędzie wiersza poleceń, które wczytuje dokumenty firmy (fa
 
 **Dodatkowe wymagania:**
 
-- kod podzielony na moduły w pakiecie (np. `intake/models.py`, `intake/loader.py`, `intake/processor.py`), uruchamiany komendą `uv run python -m intake`,
+- kod podzielony na moduły w katalogu `src/` (np. `src/models.py`, `src/loader.py`, `src/validator.py`, `src/processor.py`, `src/reporter.py`), uruchamiany komendą `uv run python main.py`,
 - adnotacje typów we wszystkich funkcjach i metodach, ścieżki przez `pathlib`, pliki otwierane przez `with` z `encoding="utf-8"`,
 - plik `.env` w `.gitignore`, a w repozytorium plik `.env.example` z przykładowymi wartościami bez sekretów,
-- co najmniej 8 testów pytest, w tym: `pytest.raises` dla wyjątków walidacji, fixture z przykładowymi dokumentami, `parametrize` oraz test wczytywania na plikach tymczasowych (`tmp_path`); testy nie mogą zależeć od losowości ani od dzisiejszej daty,
+- co najmniej 8 testów pytest w katalogu `tests/`, w tym: `pytest.raises` dla wyjątków walidacji, fixture z przykładowymi dokumentami, `parametrize` oraz test wczytywania na plikach tymczasowych (`tmp_path`); testy nie mogą zależeć od losowości ani od dzisiejszej daty,
 - **zamiast `print` użyj modułu `logging`: komunikaty o postępie na poziomie `INFO`, o pominiętych plikach i nieudanych próbach na poziomie `WARNING`, z poziomem ustawianym w `.env` (`LOG_LEVEL`).**
 
 :bulb: **Podpowiedź:**  
@@ -60,17 +60,24 @@ Doczytaj, jak skonfigurować moduł `logging` (`basicConfig`, poziomy, `getLogge
 Zajrzyj tutaj:  
 [Logging HOWTO (dokumentacja Pythona)](https://docs.python.org/3/howto/logging.html)
 
+Testy w katalogu `tests/` importują kod z `src/`. Sam `pytest` nie dodaje katalogu projektu do ścieżki importu, więc bez konfiguracji zobaczysz `ModuleNotFoundError`. Dopisz do `pyproject.toml`:
+
+```toml
+[tool.pytest.ini_options]
+pythonpath = ["."]
+```
+
 
 **Co powinieneś zrobić?**
 
-- przygotuj w katalogu `sample_data/` co najmniej 6 dokumentów: faktury i umowy w JSON oraz jeden plik CSV z kilkoma fakturami,
+- przygotuj w katalogu `data/` co najmniej 6 dokumentów: faktury i umowy w JSON oraz co najmniej jeden plik CSV,
 - celowo dodaj dane z błędami (uszkodzony JSON, pusta treść, ujemna kwota), żeby było widać działanie walidacji i raportu błędów.
 
 
 **Funkcjonalności, które powinieneś napisać:**
 
 - wczytanie konfiguracji z `.env` z czytelnym błędem, gdy brakuje wymaganej zmiennej,
-- wczytanie i walidacja wszystkich dokumentów z `INPUT_DIR`,
+- wczytanie i walidacja wszystkich dokumentów z `DOCS_DIR`,
 - `summary()` dla każdego dokumentu w logach na poziomie `INFO`,
 - wskazanie faktur powyżej `AMOUNT_THRESHOLD` oraz faktur nieopłaconych po terminie względem daty przekazanej jako argument funkcji (nie liczonej wewnątrz z `date.today()`),
 - asynchroniczne przetworzenie poprawnych dokumentów z ponawianiem prób,
@@ -80,9 +87,9 @@ Zajrzyj tutaj:
 **Twoje rozwiązanie powinno składać się z:**
 
 - `pyproject.toml` i `uv.lock` (zależności: `python-dotenv`, `pytest`),
-- pakietu `intake/` z modułami modelu, wczytywania, przetwarzania i punktem wejścia `__main__.py`,
+- katalogu `src/` z modułami modelu, wczytywania, walidacji, przetwarzania i zapisu raportu oraz pliku `main.py` jako punktu wejścia,
 - katalogu `tests/` z testami pytest,
-- katalogu `sample_data/` z przykładowymi dokumentami,
+- katalogu `data/` z przykładowymi dokumentami,
 - plików `.env.example` i `.gitignore`,
 - `README.md` z opisem projektu, instrukcją instalacji (`uv sync`), uruchomienia i uruchamiania testów (`uv run pytest`),
 - opcjonalnie krótkiego opisu przyjętej struktury / architektury.
