@@ -24,12 +24,15 @@ Zbudujesz mały program uruchamiany z terminala, który wczytuje dokumenty firmy
    - `DOCS_DIR` – katalog z dokumentami do wczytania (`str`),
    - `OUTPUT_FILE` – ścieżka pliku z raportem (`str`),
    - `AMOUNT_THRESHOLD` – kwota, powyżej której faktura wymaga akceptacji (`float`),
-   - `MAX_RETRIES` – liczba prób wywołania API (`int`).
+   - `MAX_RETRIES` – liczba prób wywołania API (`int`),
+   - `LOG_LEVEL` – poziom logowania (`str`, opcjonalny, domyślnie `INFO`; zobacz wymaganie o `logging` niżej).
 
 2. Klasy dokumentów:
    - `Document` – klasa abstrakcyjna z polami `doc_id` (`str`), `title` (`str`), `content` (`str`), `tags` (`list[str]`) i abstrakcyjną metodą `summary() -> str`,
    - `Invoice` – dodatkowo `amount` (`float`), `due_date` (`date`), `paid` (`bool`),
    - `Contract` – dodatkowo `party` (`str`), `start_date` (`date`), `end_date` (`date | None`).
+
+   Pola różnią się od zadania `#04` z `practice-python-ai-prework` i od przykładów na slajdach. To celowe: projekt ma własny model danych, więc nie kopiuj klas z zadania 1:1.
 
 3. Własne wyjątki:
    - `DocumentValidationError` – wspólna klasa bazowa błędów walidacji,
@@ -44,7 +47,7 @@ Zbudujesz mały program uruchamiany z terminala, który wczytuje dokumenty firmy
    - dekorator ponawiający wywołanie do `MAX_RETRIES` razy,
    - przetwarzanie wszystkich dokumentów równolegle przez `asyncio.gather`.
 
-6. Raport w pliku JSON (`OUTPUT_FILE`) z co najmniej: liczbą wczytanych dokumentów, listą błędów walidacji, listą faktur powyżej `AMOUNT_THRESHOLD`, listą nieudanych przetworzeń i czasem działania.
+6. Raport w pliku JSON (`OUTPUT_FILE`) z co najmniej: liczbą wczytanych dokumentów, listą błędów walidacji, listą faktur powyżej `AMOUNT_THRESHOLD`, listą nieopłaconych faktur po terminie, listą nieudanych przetworzeń i czasem działania.
 
 
 **Dodatkowe wymagania:**
@@ -86,7 +89,7 @@ pythonpath = ["."]
 
 **Twoje rozwiązanie powinno składać się z:**
 
-- `pyproject.toml` i `uv.lock` (zależności: `python-dotenv`, `pytest`),
+- `pyproject.toml` i `uv.lock` (zależności: `python-dotenv`, `pytest`); projekt załóż komendą `uv init`, a zależności dodaj przez `uv add python-dotenv pytest` (sekcja 0.1),
 - katalogu `src/` z modułami modelu, wczytywania, walidacji, przetwarzania i zapisu raportu oraz pliku `main.py` jako punktu wejścia,
 - katalogu `tests/` z testami pytest,
 - katalogu `data/` z przykładowymi dokumentami,
